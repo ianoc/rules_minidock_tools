@@ -11,14 +11,16 @@ use http::Uri;
 use hyper::{Body, Client};
 use tokio::sync::Mutex;
 
+use crate::registry::DockerAuthenticationHelper;
+
 use self::authentication_flow::AuthResponse;
 use self::private_impl::{run_single_request, RequestFailType};
 
 // https://raw.githubusercontent.com/google/go-containerregistry/main/images/credhelper-basic.svg
 pub struct HttpCli {
     pub inner_client: Client<hyper_rustls::HttpsConnector<hyper::client::HttpConnector>>,
-    pub credentials: Arc<Mutex<Option<bool>>>,
     pub auth_info: Arc<Mutex<Option<AuthResponse>>>,
+    pub docker_authorization_helpers: Arc<Vec<DockerAuthenticationHelper>>,
 }
 
 impl HttpCli {
@@ -81,6 +83,7 @@ impl HttpCli {
                             let auth_info = authentication_flow::authenticate_request(
                                 auth_fail,
                                 &self.inner_client,
+                                self.docker_authorization_helpers.clone(),
                             )
                             .await?;
                             let mut ai = self.auth_info.lock().await;

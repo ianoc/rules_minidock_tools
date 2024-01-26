@@ -105,7 +105,9 @@ where
     let req_builder = http::request::Builder::default().uri(uri);
 
     let li = auth_info.lock().await;
-    let auth_token = li.as_ref().and_then(|e| e.token.clone());
+    let auth_token = li
+        .as_ref()
+        .and_then(|e| e.token.as_ref().or(e.access_token.as_ref()).cloned());
     drop(li);
     let req_builder = if let Some(token) = auth_token {
         req_builder.header(http::header::AUTHORIZATION, format!("Bearer {}", token))
