@@ -71,9 +71,23 @@ impl HttpCli {
                     // Unwrap safe because we set the line right before this.
                     match &last_error.as_ref().unwrap() {
                         RequestFailType::Redirection(new_url) => {
-                            uri = new_url.parse::<Uri>().with_context(|| {
+                            let new_uri = new_url.parse::<Uri>().with_context(|| {
                                 format!("Failed to parse new url {:?}", new_url)
                             })?;
+                            // Sometimes we can receive new URI's that don't contain hosts
+                            // we need to supply this information from the last URI we used in that case
+                            if new_uri.host().is_some() {
+                                uri = new_uri;
+                            } else {
+                                let mut parts = uri.into_parts();
+                                parts.path_and_query = new_uri.path_and_query().cloned();
+                                uri = Uri::from_parts(parts).with_context(|| {
+                                    format!(
+                                        "Constructed an invalid uri from parts, new uri: {:?}",
+                                        new_uri
+                                    )
+                                })?;
+                            }
                             continue;
                         }
                         RequestFailType::ConnectError(_) => continue,

@@ -136,9 +136,9 @@ impl HttpRegistry {
             .http_client
             .request_simple(&req_uri, http::Method::HEAD, 3);
 
-        let mut resp = match timeout(Duration::from_millis(10000), req_future).await {
+        let mut resp = match timeout(Duration::from_millis(20000), req_future).await {
             Err(_) => bail!(
-                "Timed out connecting to registry {:?}, after waiting 40 seconds.",
+                "Timed out connecting to registry {:?}, after waiting 20 seconds.",
                 registry_uri
             ),
             Ok(e) => e.with_context(|| {
